@@ -1,0 +1,13 @@
+[Unit]
+Description=R3P React frontend (nginx)
+After=network.target
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/podman run --rm --name r3p-frontend \
+  -p 127.0.0.1:3000:80 \
+  ghcr.io/bradydibble/r3p-frontend:latest
+ExecStop=/usr/bin/podman stop r3p-frontend
+
+[Install]
+WantedBy=default.target

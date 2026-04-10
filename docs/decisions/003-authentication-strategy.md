@@ -2,12 +2,12 @@
 
 **Status:** Proposed
 **Date:** 2025-10-04
-**Deciders:** CRAG Team, Rocky Security Team
+**Deciders:** R3P Team, Rocky Security Team
 **Context:** Need secure authentication that integrates with Rocky's existing identity infrastructure while remaining accessible to community members and anonymous drive-bys
 
 ## Context and Problem Statement
 
-CRAG needs user authentication for:
+R3P needs user authentication for:
 - Submitting test results (identity optional — anonymous accepted)
 - Administrative functions (creating test runs, assigning test cases)
 - API access (token-based for automation)
@@ -61,7 +61,7 @@ Requirements:
 
 **Pros:**
 - Standards-based (OAuth2/OIDC)
-- No password management in CRAG
+- No password management in R3P
 - Leverages existing Rocky identity infrastructure
 - Single sign-on with other Rocky services
 
@@ -76,7 +76,7 @@ Requirements:
 ### Option 3: Username/Password with Local Database
 
 **Approach:**
-- Store hashed passwords in CRAG database
+- Store hashed passwords in R3P database
 - Use bcrypt or argon2 for hashing
 
 **Pros:**
@@ -87,7 +87,7 @@ Requirements:
 - Security risk — password management is hard to get right
 - Password reset flows required
 - No integration with existing Rocky identity
-- Users need separate CRAG account
+- Users need separate R3P account
 - Increased attack surface
 
 **Verdict:** Not recommended. Rejected.
@@ -95,9 +95,9 @@ Requirements:
 ### Option 4: Mattermost OAuth (Primary Community Login)
 
 **Approach:**
-- Register CRAG as an OAuth 2.0 application in the Rocky Linux Mattermost instance (chat.rockylinux.org)
+- Register R3P as an OAuth 2.0 application in the Rocky Linux Mattermost instance (chat.rockylinux.org)
 - User clicks "Login with Mattermost" → redirected to Mattermost → grants permission → redirected back
-- CRAG receives Mattermost username, display name, email
+- R3P receives Mattermost username, display name, email
 
 **Pros:**
 - Rocky Linux community members are already on chat.rockylinux.org
@@ -108,7 +108,7 @@ Requirements:
 - Connects login identity to the community where testing coordination already happens
 
 **Cons:**
-- Requires admin to register CRAG as OAuth app in Rocky Mattermost
+- Requires admin to register R3P as OAuth app in Rocky Mattermost
 - Dependency on Mattermost availability
 - Rocky Mattermost admin must enable OAuth app registration
 
@@ -173,10 +173,10 @@ The path of least friction for Rocky Linux community members:
 1. User clicks "Login with Mattermost"
 2. Redirected to `https://chat.rockylinux.org/oauth/authorize`
 3. User grants permission (if not already)
-4. Redirected back to CRAG with authorization code
-5. CRAG exchanges code for access token
+4. Redirected back to R3P with authorization code
+5. R3P exchanges code for access token
 6. Fetches user info from Mattermost API (`/api/v4/users/me`)
-7. Creates/updates CRAG user with `mattermost_id`, `username`, `display_name`
+7. Creates/updates R3P user with `mattermost_id`, `username`, `display_name`
 8. Sets `tester_tier = 'community'`, `trust_weight = 0.50`
 9. After 5+ results and 30+ days: auto-promotes to `verified`, `trust_weight = 0.75`
 
@@ -196,7 +196,7 @@ For designated testing team members:
 oauth.register(
     name='rocky',
     server_metadata_url='https://id.rockylinux.org/.well-known/openid-configuration',
-    client_id='crag',
+    client_id='r3p',
     client_secret=settings.OIDC_CLIENT_SECRET,
     client_kwargs={'scope': 'openid profile email'}
 )
@@ -234,8 +234,8 @@ For automation, CI/CD, and MCP agents:
 
 **Token Usage:**
 ```bash
-curl -H "Authorization: Bearer crag_abc123..." \
-  https://crag.bradydibble.com/api/v1/results \
+curl -H "Authorization: Bearer r3p_abc123..." \
+  https://r3p.bradydibble.com/api/v1/results \
   -d '{"testcase_ulid": "...", "outcome": "PASS"}'
 ```
 
@@ -258,8 +258,8 @@ curl -H "Authorization: Bearer crag_abc123..." \
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://crag.bradydibble.com",   # POC
-        "https://crag.rockylinux.org",     # Production
+        "https://r3p.bradydibble.com",   # POC
+        "https://r3p.rockylinux.org",     # Production
         "http://localhost:3000"            # Development
     ],
     allow_credentials=True,

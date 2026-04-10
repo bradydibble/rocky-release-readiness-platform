@@ -204,15 +204,15 @@ Recent achievements include catching Rocky 9.6 configuration changes before rele
 
 **Purpose:** Documentation hub for testing processes and guidelines
 
-## Integration Opportunities for CRAG
+## Integration Opportunities for R3P
 
 ### Existing Infrastructure to Leverage
 1. **OpenQA API** - Pull automated test results
 2. **Sparky Webhooks** - Receive test results from Sparky
-3. **rpminspect** - `rocky-linux/testing/rpminspect/` contains wrapper scripts and Koji integration config; CRAG can consume rpminspect comparison results as automated package test results via an `rpminspect_mappings` table
-4. **MantisBT** - Link bug reports from CRAG results
+3. **rpminspect** - `rocky-linux/testing/rpminspect/` contains wrapper scripts and Koji integration config; R3P can consume rpminspect comparison results as automated package test results via an `rpminspect_mappings` table
+4. **MantisBT** - Link bug reports from R3P results
 5. **Apollo Build System** - Query build status, compose IDs
-6. **testing.rocky.page** - Could host CRAG or link to it
+6. **testing.rocky.page** - Could host R3P or link to it
 7. **Mattermost** - Notifications, community engagement, and OAuth login for community members
 8. **RESF Identity** - OIDC/OAuth integration for core team members
 
@@ -226,9 +226,9 @@ Recent achievements include catching Rocky 9.6 configuration changes before rele
 - Test source (manual, OpenQA, Sparky, rpminspect)
 
 ### Scope Note
-CRAG specifically targets **release candidate testing events** — the pre-release community testing cycle for each Rocky Linux minor or major version (e.g., 9.8 RC, 10.2 RC, 11.0). It is not designed for ongoing package update testing during the life of a minor version. Sparky, rpminspect, and other automated tools may contribute results as data sources, but CRAG's primary workflow is coordinating community testers for the RC validation playbook.
+R3P specifically targets **release candidate testing events** — the pre-release community testing cycle for each Rocky Linux minor or major version (e.g., 9.8 RC, 10.2 RC, 11.0). It is not designed for ongoing package update testing during the life of a minor version. Sparky, rpminspect, and other automated tools may contribute results as data sources, but R3P's primary workflow is coordinating community testers for the RC validation playbook.
 
-## Key Insights for CRAG
+## Key Insights for R3P
 
 ### What Works Well
 1. **Multiple Testing Approaches:** Automated (OpenQA, Sparky) + Manual coverage
@@ -244,8 +244,8 @@ CRAG specifically targets **release candidate testing events** — the pre-relea
 4. **Accessibility:** Sparky setup is complex for newcomers
 5. **Metrics:** Limited release readiness insights
 
-### CRAG's Role
-CRAG can serve as the **coordination layer** that:
+### R3P's Role
+R3P can serve as the **coordination layer** that:
 - Shows what's been tested (automated + manual)
 - Highlights what needs testing (gaps)
 - Makes manual testing approachable
@@ -258,7 +258,7 @@ CRAG can serve as the **coordination layer** that:
 From Chris Stack Stackpole:
 > "Right now, I just want to make sure we've got good coverage of a lot of different tests... If you're doing something that you're really interested in, chances are somebody else wants that too."
 
-This community-first, coverage-focused philosophy should guide CRAG's design.
+This community-first, coverage-focused philosophy should guide R3P's design.
 
 ## References
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=R3P FastAPI backend
+After=network.target r3p-db.service
+Requires=r3p-db.service
+
+[Service]
+Restart=always
+EnvironmentFile=/app/data/r3p-backend.env
+ExecStart=/usr/bin/podman run --rm --name r3p-backend \
+  --env-file /app/data/r3p-backend.env \
+  --network=host \
+  -v /app/data:/app/data:Z \
+  ghcr.io/bradydibble/r3p-backend:latest
+ExecStop=/usr/bin/podman stop r3p-backend
+
+[Install]
+WantedBy=default.target

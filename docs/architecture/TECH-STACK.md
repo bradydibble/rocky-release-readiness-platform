@@ -1,11 +1,11 @@
-# CRAG Technology Stack
+# R3P Technology Stack
 
 **Last Updated:** October 4, 2025
 **Status:** Approved for MVP Development
 
 ## Overview
 
-CRAG's technology stack is chosen to balance rapid development velocity, long-term maintainability, security, and integration with the Rocky Linux ecosystem.
+R3P's technology stack is chosen to balance rapid development velocity, long-term maintainability, security, and integration with the Rocky Linux ecosystem.
 
 ## Stack Summary
 
@@ -258,7 +258,7 @@ frontend/
 **POC (cairn-02 homelab):**
 - Rootless Podman containers as systemd user services
 - Caddy reverse proxy + Cloudflare Tunnel
-- `crag.bradydibble.com`
+- `r3p.bradydibble.com`
 - See [POC Hosting Guide](./POC-HOSTING.md)
 
 **Development (Docker Compose for local dev):**
@@ -269,7 +269,7 @@ services:
     build: ./backend
     ports: ["8000:8000"]
     environment:
-      DATABASE_URL: postgresql://crag:dev_password@db:5432/crag
+      DATABASE_URL: postgresql://r3p:dev_password@db:5432/r3p
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ./backend:/app
@@ -287,8 +287,8 @@ services:
     image: postgres:15-alpine
     volumes: ["postgres_data:/var/lib/postgresql/data"]
     environment:
-      POSTGRES_DB: crag
-      POSTGRES_USER: crag
+      POSTGRES_DB: r3p
+      POSTGRES_USER: r3p
       POSTGRES_PASSWORD: dev_password
 
   redis:
@@ -325,8 +325,8 @@ services:
 
 ```bash
 # Clone repository
-git clone https://github.com/resf/crag.git
-cd crag
+git clone https://github.com/bradydibble/r3p.git
+cd r3p
 
 # Start services
 docker-compose up -d
@@ -424,4 +424,4 @@ This technology stack provides:
 - ✅ **Security** via tiered auth (anonymous → Mattermost → Rocky Identity)
 - ✅ **Integration** with Rocky ecosystem (Mattermost, OpenQA, Sparky, rpminspect)
 - ✅ **Maintainability** with clear architecture and documentation
-- ✅ **Deployable now** via POC on cairn-02 (crag.bradydibble.com)
+- ✅ **Deployable now** via POC on cairn-02 (r3p.bradydibble.com)

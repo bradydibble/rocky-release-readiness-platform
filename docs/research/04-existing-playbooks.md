@@ -1,6 +1,6 @@
 # Existing Rocky Linux Testing Playbooks
 
-**Purpose:** Reference material for CRAG design. Documents the existing testing tools, workflows, team structure, and canonical playbook format used by the Rocky Linux Testing Team.
+**Purpose:** Reference material for R3P design. Documents the existing testing tools, workflows, team structure, and canonical playbook format used by the Rocky Linux Testing Team.
 
 **Sources:**
 - https://github.com/rocky-linux/testing — testing infrastructure and tooling
@@ -12,7 +12,7 @@
 
 ## 1. Actual Playbook Structure (Rocky 9.6 Example)
 
-The Rocky 9.6 Beta Testing run is the canonical example of a CRAG test event. Understanding this structure directly drives the data model.
+The Rocky 9.6 Beta Testing run is the canonical example of a R3P test event. Understanding this structure directly drives the data model.
 
 ### Test Run
 A test run is scoped to a specific Rocky Linux release candidate. It includes:
@@ -92,7 +92,7 @@ This assignment-first model is a key design element: test cases have a designate
 
 ## 2. Community Testing Team Roster
 
-The Rocky Linux QA and Testing Team has 25+ members with diverse hardware capabilities. This is the ground truth for what hardware diversity CRAG's gap analysis must cover.
+The Rocky Linux QA and Testing Team has 25+ members with diverse hardware capabilities. This is the ground truth for what hardware diversity R3P's gap analysis must cover.
 
 ### Leadership
 - **Chris Stackpole (@stack)** — Team Co-Lead
@@ -148,7 +148,7 @@ Podman/Docker-based OpenQA deployment for local testing infrastructure:
 - Worker node architecture (central server + distributed workers)
 - Data stored in `data/` folder; PostgreSQL data in `data-postgres/`
 
-**CRAG integration:** CRAG's OpenQA integration should support both `openqa.rockylinux.org` (primary) and self-hosted instances.
+**R3P integration:** R3P's OpenQA integration should support both `openqa.rockylinux.org` (primary) and self-hosted instances.
 
 ### `rpminspect/` — RPM Inspection Tooling
 Five wrapper scripts for automated RPM comparison against upstream:
@@ -161,7 +161,7 @@ Five wrapper scripts for automated RPM comparison against upstream:
 
 **40+ inspection categories**: license, metadata, ELF, ABI compatibility, changelogs, patches, upstream sources, etc.
 
-**CRAG integration:** rpminspect results can be ingested as automated test results for Package testing test cases via an `rpminspect_mappings` table (parallel to `openqa_mappings`).
+**R3P integration:** rpminspect results can be ingested as automated test results for Package testing test cases via an `rpminspect_mappings` table (parallel to `openqa_mappings`).
 
 ### `test-reports/` — Hardware Test Report Hierarchy
 Existing structured YAML hierarchy for hardware test reports, collected via `xsos --scrub` (anonymizes PII):
@@ -180,7 +180,7 @@ Resource Type/
 
 Reports capture: BIOS/firmware details, OS config, CPU specs/flags, memory, storage/filesystem, network interfaces.
 
-**CRAG integration:** This hierarchy directly defines the `hardware_profiles` table schema — `resource_type` (cloud/container/physical/hypervisor), `vendor`, `model`, `submodel`. The `raw_metadata JSONB` column accepts xsos output for structured storage and parsing.
+**R3P integration:** This hierarchy directly defines the `hardware_profiles` table schema — `resource_type` (cloud/container/physical/hypervisor), `vendor`, `model`, `submodel`. The `raw_metadata JSONB` column accepts xsos output for structured storage and parsing.
 
 ### `report_parser/` — Structured Field Extraction
 Python parsers extract structured fields from xsos sosreport output:
@@ -193,7 +193,7 @@ Python parsers extract structured fields from xsos sosreport output:
 - `parse_lspci.py` — PCIe device info
 - `parse_operating_system.py` — OS metadata
 
-**CRAG integration:** These parsers define the structured fields available in `hardware_profiles` — NIC, storage, processor, BIOS type, etc.
+**R3P integration:** These parsers define the structured fields available in `hardware_profiles` — NIC, storage, processor, BIOS type, etc.
 
 ### `comps/` and `repo_compare/` — Package Group Comparisons
 - `comps/`: Package group definitions comparing Rocky vs RHEL (BaseOS, AppStream, PowerTools, Resilient Storage)
@@ -202,7 +202,7 @@ Python parsers extract structured fields from xsos sosreport output:
   - `module_compare_html.sh` — module version analysis
   - `repo_compare_launcher.sh` — batch comparison across RHEL8/Rocky8
 
-**CRAG integration:** Results from repo comparisons can map to Package testing test cases. Not a primary integration target but useful reference.
+**R3P integration:** Results from repo comparisons can map to Package testing test cases. Not a primary integration target but useful reference.
 
 ---
 
@@ -224,13 +224,13 @@ Installation automation scripts for setting up OpenQA testing infrastructure (ac
 **Architecture variants:**
 - `install-openqa-post-rocky-aarch64.sh` — ARM architecture support
 
-**Context:** These scripts set up the OpenQA infrastructure that CRAG integrates with. The primary Rocky Linux instance is at `openqa.rockylinux.org`. Teams can also run self-hosted instances using these scripts.
+**Context:** These scripts set up the OpenQA infrastructure that R3P integrates with. The primary Rocky Linux instance is at `openqa.rockylinux.org`. Teams can also run self-hosted instances using these scripts.
 
 ---
 
 ## 5. Testing Method Taxonomy
 
-The QA team's authoritative testing method categories. These map to the `test_method` field in CRAG's data model and replace the generic single `test_type` field:
+The QA team's authoritative testing method categories. These map to the `test_method` field in R3P's data model and replace the generic single `test_type` field:
 
 | Method | `test_method` value | Description | Primary Environments |
 |--------|--------------------|-----------|--------------------|
@@ -251,9 +251,9 @@ The QA team's authoritative testing method categories. These map to the `test_me
 
 ## 6. Automated Tool Inventory
 
-All tools mentioned in QA team documentation, with CRAG integration status:
+All tools mentioned in QA team documentation, with R3P integration status:
 
-| Tool | Purpose | CRAG Integration Status |
+| Tool | Purpose | R3P Integration Status |
 |------|---------|------------------------|
 | OpenQA | Automated installer/UI testing (screenshot-based) | **Planned — Phase 2** — poll `openqa.rockylinux.org` API every 15 min |
 | rpminspect | RPM comparison, 40+ inspection categories | **Planned — Phase 2** — `rpminspect_mappings` table, webhook/poll |
@@ -272,7 +272,7 @@ All tools mentioned in QA team documentation, with CRAG integration status:
 
 The QA team's structured hardware validation template, used for certification and historical record-keeping:
 
-| Field | Description | CRAG Schema Location |
+| Field | Description | R3P Schema Location |
 |-------|-------------|---------------------|
 | Make/Vendor | e.g., HP, Dell, Lenovo, AWS | `hardware_profiles.vendor` |
 | Model | e.g., "PowerEdge T330" | `hardware_profiles.model` |
@@ -291,7 +291,7 @@ The QA team's structured hardware validation template, used for certification an
 
 ### Data Reporting Hierarchy from QA Document
 
-The QA team's hardware reporting hierarchy maps directly to CRAG's `hardware_profiles` table:
+The QA team's hardware reporting hierarchy maps directly to R3P's `hardware_profiles` table:
 
 ```
 Vendor → Model → Submodel → Tested by [contributor]
@@ -302,4 +302,4 @@ Examples:
   Lenovo → ThinkPad → W530 → Tested by Pedro Alves
 ```
 
-This is exactly what CRAG's hardware gap analysis dashboard should display: which Vendor/Model/Architecture combinations have confirmed PASS results for a given Rocky RC, and which combinations remain untested.
+This is exactly what R3P's hardware gap analysis dashboard should display: which Vendor/Model/Architecture combinations have confirmed PASS results for a given Rocky RC, and which combinations remain untested.

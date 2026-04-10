@@ -1,0 +1,17 @@
+[Unit]
+Description=R3P PostgreSQL database
+After=network.target
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/podman run --rm --name r3p-db \
+  -e POSTGRES_USER=r3p \
+  -e POSTGRES_PASSWORD=%i \
+  -e POSTGRES_DB=r3p \
+  -v /app/data/pgdata:/var/lib/postgresql/data:Z \
+  -p 127.0.0.1:5432:5432 \
+  docker.io/library/postgres:15-alpine
+ExecStop=/usr/bin/podman stop r3p-db
+
+[Install]
+WantedBy=default.target

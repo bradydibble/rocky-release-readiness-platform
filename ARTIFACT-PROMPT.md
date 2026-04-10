@@ -1,4 +1,4 @@
-# CRAG Artifact Prototype Prompt
+# R3P Artifact Prototype Prompt
 
 **Purpose:** Generate a working interactive prototype for Stack to review and provide feedback
 **Platform:** claude.ai (Artifacts feature)
@@ -19,7 +19,7 @@
 ## Prompt
 
 ```
-Build a single-file React + Tailwind "CRAG — Rocky Linux Test Coordination" runnable artifact.
+Build a single-file React + Tailwind "R3P — Rocky Linux Test Coordination" runnable artifact.
 
 Brief:
 A release candidate test coordination system for Rocky Linux. Admins create test runs for each RC (e.g., Rocky 9.6 RC); community members submit results with hardware/environment details.
@@ -153,7 +153,7 @@ The goal: Stack should be able to click through a 9.6 RC test run, see which tes
 1. Stack reviews artifact and provides feedback
 2. Iterate on design based on input
 3. Build the real backend with API endpoints
-4. Deploy POC to cairn-02 (crag.bradydibble.com)
+4. Deploy POC to cairn-02 (r3p.bradydibble.com)
 5. Stack can use it for actual Rocky RC testing events
 
 ---

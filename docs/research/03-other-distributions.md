@@ -97,7 +97,7 @@
 **Applicability to Rocky:**
 - SRU-style testing cycles could work for Rocky Updates
 - Community hub approach worth considering
-- Still lacks the visibility/coordination CRAG aims to provide
+- Still lacks the visibility/coordination R3P aims to provide
 
 ## openSUSE
 
@@ -142,7 +142,7 @@
 **Applicability to Rocky:**
 - Rocky already uses openQA
 - Testing team structure similar to Rocky's
-- CRAG could complement openQA like Fedora does
+- R3P could complement openQA like Fedora does
 
 ## Arch Linux
 
@@ -204,7 +204,7 @@
 | **Arch** | Package signoff | CLI tools + IRC | Medium - formal testers | Process-driven |
 | **Rocky (current)** | Multi-layered | openQA + Sparky | Low-Medium - team + volunteers | Weekly meetings |
 
-## Key Takeaways for CRAG
+## Key Takeaways for R3P
 
 ### What's Missing Across Distributions
 
@@ -228,16 +228,16 @@
 3. **Ubuntu SRU Cycles:** Regular, predictable testing windows
 4. **Debian Continuous:** Real-world testing via rolling branch
 
-### CRAG's Opportunity
+### R3P's Opportunity
 
-CRAG can combine the best aspects:
+R3P can combine the best aspects:
 - **Fedora's Test Days** → Event coordination and community engagement
 - **openSUSE's openQA focus** → Deep automated testing integration
 - **Arch's signoff system** → Clear approval/confidence metrics
 - **Ubuntu's SRU cycles** → Regular testing cadence
 - **+ Novel features** → Gap visualization, contributor recognition, multi-source aggregation, trust-weighted results
 
-### Unique Value Propositions for CRAG
+### Unique Value Propositions for R3P
 
 1. **Unified View:** Show automated (openQA, Sparky, rpminspect) + manual results together
 2. **Gap Analysis:** Proactively identify what hardware/arch combinations need testing
@@ -257,7 +257,7 @@ While other distributions have testing processes, **none have a comprehensive co
 - Modern, accessible UX
 - Trust-weighted results
 
-This represents a clear opportunity for CRAG to be best-in-class and potentially influence other distributions' approaches.
+This represents a clear opportunity for R3P to be best-in-class and potentially influence other distributions' approaches.
 
 ## References
 

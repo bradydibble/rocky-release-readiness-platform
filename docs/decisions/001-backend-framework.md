@@ -2,12 +2,12 @@
 
 **Status:** Proposed
 **Date:** 2025-10-04
-**Deciders:** CRAG Team, Rocky Testing Team
-**Context:** Need to choose a backend framework for CRAG API server
+**Deciders:** R3P Team, Rocky Testing Team
+**Context:** Need to choose a backend framework for R3P API server
 
 ## Context and Problem Statement
 
-CRAG requires a robust, performant backend framework to handle:
+R3P requires a robust, performant backend framework to handle:
 - REST API endpoints for web UI and external integrations
 - OIDC + Mattermost OAuth authentication flows
 - Database operations (PostgreSQL)
@@ -156,7 +156,7 @@ async fn create_result(
 
 ### Rationale
 
-FastAPI provides the best balance for CRAG's needs:
+FastAPI provides the best balance for R3P's needs:
 
 1. **Development Velocity** - Fastest path to MVP with automatic validation, serialization, and API docs
 2. **Community Fit** - Python aligns with Fedora QA ecosystem (ResultsDB, existing tools)

@@ -238,7 +238,7 @@ From Fedora CoreOS Test Day (211):
 - Color coding for pass/fail
 - Links to bug reports
 
-## Applicability to CRAG
+## Applicability to R3P
 
 ### What to Adopt
 - ULID tracking for test cases

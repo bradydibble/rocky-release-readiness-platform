@@ -2,12 +2,12 @@
 
 **Status:** Proposed
 **Date:** 2025-10-04
-**Deciders:** CRAG Team
-**Context:** Need to choose a frontend framework for CRAG web interface
+**Deciders:** R3P Team
+**Context:** Need to choose a frontend framework for R3P web interface
 
 ## Context and Problem Statement
 
-CRAG requires a modern, responsive web interface that:
+R3P requires a modern, responsive web interface that:
 - Works seamlessly on desktop and mobile devices
 - Provides real-time updates for test results
 - Offers excellent UX for test result submission and viewing
@@ -156,7 +156,7 @@ const { data: testrun } = await useFetch(`/api/testruns/${route.params.id}`)
 
 ### Rationale
 
-React with Next.js provides the best foundation for CRAG:
+React with Next.js provides the best foundation for R3P:
 
 1. **Ecosystem Maturity** - Largest selection of component libraries and tools
 2. **Contributor Access** - Most developers know React, easier to find help
