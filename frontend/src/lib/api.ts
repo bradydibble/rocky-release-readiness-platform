@@ -81,6 +81,7 @@ export type Result = {
   arch: string
   deploy_type: string
   hardware_notes: string | null
+  comment: string | null
   submitter_name: string | null
   submit_time: string
   carried_from_milestone_id: number | null
@@ -164,6 +165,7 @@ export const submitResult = (
     arch: string
     deploy_type: string
     hardware_notes?: string
+    comment?: string
     submitter_name?: string
   },
 ) =>

@@ -8,6 +8,7 @@ class ResultCreate(BaseModel):
     arch: str
     deploy_type: str
     hardware_notes: str | None = None
+    comment: str | None = None
     submitter_name: str | None = None
 
 
@@ -20,6 +21,7 @@ class ResultResponse(BaseModel):
     arch: str
     deploy_type: str
     hardware_notes: str | None
+    comment: str | None
     submitter_name: str | None
     submit_time: datetime
     carried_from_milestone_id: int | None

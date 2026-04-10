@@ -21,6 +21,7 @@ export default function ResultForm({ testCaseId, milestoneId, onClose }: Props) 
   const [arch, setArch] = useState(ARCHES[0])
   const [deployType, setDeployType] = useState(DEPLOY_TYPES[0])
   const [hardwareNotes, setHardwareNotes] = useState('')
+  const [comment, setComment] = useState('')
   const [submitterName, setSubmitterName] = useState(username)
 
   const mutation = useMutation({
@@ -30,6 +31,7 @@ export default function ResultForm({ testCaseId, milestoneId, onClose }: Props) 
         arch,
         deploy_type: deployType,
         hardware_notes: hardwareNotes || undefined,
+        comment: comment || undefined,
         submitter_name: submitterName || undefined,
       }),
     onSuccess: () => {
@@ -88,6 +90,16 @@ export default function ResultForm({ testCaseId, milestoneId, onClose }: Props) 
             placeholder="anonymous"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-xs text-slate-500 mb-1">Notes / comments (optional)</label>
+        <textarea
+          className="input w-full h-16 resize-none"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="e.g. Failed on step 3 — kernel panic during install"
+        />
       </div>
 
       <div>
