@@ -1,0 +1,160 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Set up project structure and database schema",
+        "description": "Initialize the project with React frontend and Node.js backend, and set up the PostgreSQL database schema as specified in the PRD.",
+        "details": "1. Create a new project with React 18+ for frontend and Node.js 18+ with Express for backend\n2. Set up Docker configuration for development environment\n3. Configure PostgreSQL 14+ database\n4. Implement the database schema as defined in TR-2:\n   - Create events table with all required fields\n   - Create test_results table with all required fields\n   - Set up proper constraints and relationships\n   - Create all required indexes\n5. Set up basic API structure with Express\n6. Configure Tailwind CSS 3+ for styling\n7. Set up Lucide React for icons\n8. Implement basic project structure with folders for components, pages, services, etc.\n9. Configure ESLint and Prettier for code quality\n10. Set up basic CI/CD pipeline for testing",
+        "testStrategy": "1. Verify database connection and schema creation\n2. Test database migrations\n3. Validate constraints and relationships\n4. Ensure Docker containers start correctly\n5. Verify frontend and backend can communicate\n6. Run automated tests for database operations\n7. Validate schema against PRD requirements",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement authentication and authorization system",
+        "description": "Create a simple authentication system that allows anonymous submissions but provides admin functionality via a toggle.",
+        "details": "1. Implement FR-1 requirements for authentication and authorization\n2. Create an admin toggle component in the UI\n3. Implement middleware to check admin status on protected routes\n4. Store admin status in localStorage for persistence\n5. Hide admin-only UI elements from non-admin users\n6. Create API endpoints for admin functions with proper authorization checks\n7. Implement anonymous submission functionality\n8. Add optional username field to forms without requiring password\n9. Create admin-specific API routes with middleware protection\n10. Implement client-side conditional rendering based on admin status",
+        "testStrategy": "1. Verify anonymous submissions work correctly\n2. Test admin toggle functionality\n3. Ensure admin-only routes are protected\n4. Verify admin UI elements are hidden from regular users\n5. Test persistence of admin status across page refreshes\n6. Verify authorization middleware blocks unauthorized access\n7. Test with various user scenarios (anonymous, named user, admin)",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Develop test event management functionality",
+        "description": "Create the admin interface for managing test events, including creation, editing, and status management.",
+        "details": "1. Implement FR-2 requirements for test event management\n2. Create API endpoints for event CRUD operations:\n   - GET /api/events - List all events with filters\n   - GET /api/events/:id - Get single event\n   - POST /api/events - Create event (admin only)\n   - PUT /api/events/:id - Update event (admin only)\n   - DELETE /api/events/:id - Delete event (admin only)\n   - PATCH /api/events/:id/status - Change event status\n3. Implement event creation form with all required fields\n4. Add validation for event data (name, dates, test cases, etc.)\n5. Create event list view with filtering and sorting\n6. Implement event detail view\n7. Add event status management (draft, open, closed, archived)\n8. Create UI for editing events\n9. Implement retest request functionality\n10. Add event archiving capability",
+        "testStrategy": "1. Test all CRUD operations for events\n2. Verify validation rules for event creation/editing\n3. Test event status changes\n4. Verify admin-only access to management functions\n5. Test filters and sorting in event list\n6. Verify event detail view displays all information correctly\n7. Test retest request functionality\n8. Verify event archiving works correctly\n9. Test with various event data scenarios",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement quick test reporting functionality",
+        "description": "Create the simplified test reporting interface that allows users to quickly submit feedback with minimal input.",
+        "details": "1. Implement FR-3 requirements for quick test reporting\n2. Create form component with required fields:\n   - Architecture selection (x86_64, aarch64, ppc64le, s390x)\n   - Deployment type selection (bare-metal, kvm, container, vm, cloud-vm)\n   - Environment selection (gcp, aws, azure, on-prem, homelab, other)\n3. Add feedback options with large buttons (Works 👍, Minor Issues ⚠️, Broken ❌)\n4. Implement optional fields (username, comment)\n5. Create API endpoint for submitting quick reports\n6. Add validation for required fields\n7. Implement auto-inference of test case based on deployment type\n8. Add duplicate submission detection\n9. Create success confirmation UI\n10. Disable submission for closed events\n11. Implement form reset after successful submission",
+        "testStrategy": "1. Test form validation for required fields\n2. Verify all feedback options work correctly\n3. Test submission with various combinations of data\n4. Verify duplicate detection works as expected\n5. Test auto-inference of test cases\n6. Verify submission is disabled for closed events\n7. Test success confirmation and form reset\n8. Verify data is correctly stored in the database\n9. Test with anonymous and named submissions",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Develop detailed test reporting functionality",
+        "description": "Create the comprehensive test reporting interface that allows users to submit granular test results for multiple test cases.",
+        "details": "1. Implement FR-4 requirements for detailed test reporting\n2. Create toggle between quick and detailed reporting modes\n3. Implement per-test-case outcome selection (PASS/FAIL/SKIP)\n4. Add test guide icon display for tests with guides\n5. Implement \"Retest Needed\" badge for flagged tests\n6. Create custom test scenario input functionality\n7. Add bug report linking with validation (ROCKY-#### format)\n8. Implement comment field for overall notes\n9. Create API endpoint for submitting detailed reports\n10. Add validation to ensure at least one test is selected\n11. Implement proper data storage for all test outcomes\n12. Create UI for displaying custom tests with category tags",
+        "testStrategy": "1. Test toggle between quick and detailed modes\n2. Verify all outcome selections work correctly\n3. Test custom test scenario addition\n4. Verify bug report linking and validation\n5. Test submission with various combinations of test outcomes\n6. Verify \"Retest Needed\" badges display correctly\n7. Test guide icon display and functionality\n8. Verify validation for at least one test selection\n9. Test data storage for all test outcomes\n10. Verify custom tests are properly categorized and displayed",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Create coverage matrix visualization",
+        "description": "Implement the visual matrix showing test coverage across architectures with color coding for test status.",
+        "details": "1. Implement FR-6 requirements for coverage matrix\n2. Create toggle to show/hide matrix\n3. Implement matrix layout with rows for test cases and columns for architectures\n4. Add color coding:\n   - Green (≥1 PASS)\n   - Red (any FAIL)\n   - Yellow (PARTIAL)\n   - Gray (untested)\n5. Implement hover/click functionality to show result counts\n6. Add indicator for tests needing retest\n7. Create responsive design with horizontal scroll for mobile\n8. Implement API endpoint for retrieving coverage data\n9. Add accessibility features (not relying solely on color)\n10. Create print-friendly styles\n11. Implement real-time updates of matrix as new results are submitted",
+        "testStrategy": "1. Test matrix rendering with various data scenarios\n2. Verify color coding logic works correctly\n3. Test hover/click functionality for result counts\n4. Verify retest indicators display correctly\n5. Test responsive behavior on different screen sizes\n6. Verify accessibility features work as expected\n7. Test print-friendly styles\n8. Verify matrix updates correctly with new submissions\n9. Test with edge cases (no data, all passing, all failing)",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement results table and filtering",
+        "description": "Create the detailed results table showing all test submissions with filtering and sorting capabilities.",
+        "details": "1. Implement FR-7 requirements for results table\n2. Create table component with columns:\n   - Username\n   - Architecture\n   - Deploy Type\n   - Submission Type\n   - Test Results\n   - Bugs\n   - Comment\n   - Submitted At\n3. Implement Test Results column with appropriate badges:\n   - Quick reports: Single badge (Works/Issues/Broken)\n   - Detailed reports: List of test badges with outcomes\n   - Custom tests: Tagged distinctly with icon\n4. Add bug column with linked bugs and status indicators\n5. Implement filters for Architecture, Outcome, Deploy Type\n6. Create responsive table with horizontal scroll\n7. Add row hover highlighting\n8. Implement default sorting (most recent first)\n9. Create API endpoint for retrieving filtered results\n10. Add pagination for large result sets",
+        "testStrategy": "1. Test table rendering with various data scenarios\n2. Verify all columns display correctly\n3. Test filters for each category\n4. Verify responsive behavior on different screen sizes\n5. Test row hover highlighting\n6. Verify sorting works correctly\n7. Test pagination with large data sets\n8. Verify bug links and status indicators\n9. Test with different types of submissions (quick, detailed, custom)",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Develop test guides functionality",
+        "description": "Implement the system for storing and displaying step-by-step test guides for test cases.",
+        "details": "1. Implement FR-8 requirements for test guides\n2. Create data structure for storing guides per test case per event\n3. Implement guide structure with:\n   - Title\n   - Prerequisites (list)\n   - Steps (numbered)\n   - Expected Result\n   - Estimated Time\n4. Add book icon next to test names with guides\n5. Create modal display with clear formatting\n6. Implement API endpoints for managing guides (admin only)\n7. Add guide editing interface for admins\n8. Create guide viewing component with proper styling\n9. Implement dark mode support for guides\n10. Add guide preview in admin interface",
+        "testStrategy": "1. Test guide creation and editing\n2. Verify guide display in modal\n3. Test book icon visibility next to tests with guides\n4. Verify formatting in both light and dark modes\n5. Test guide management API endpoints\n6. Verify guide preview in admin interface\n7. Test with various guide content (long steps, multiple prerequisites, etc.)\n8. Verify guides are correctly associated with test cases",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement data export functionality",
+        "description": "Create the functionality to export test results in JSON and Markdown formats.",
+        "details": "1. Implement FR-10 requirements for data export\n2. Create API endpoints for exports:\n   - GET /api/events/:id/export/json\n   - GET /api/events/:id/export/markdown\n3. Implement JSON export with full event object and results array\n4. Create Markdown export with:\n   - Event metadata\n   - Summary statistics\n   - Results table\n5. Add download trigger with generated filename\n6. Implement filename format: `{event-name-slug}-results.{json|md}`\n7. Create export buttons in UI\n8. Add loading indicators during export generation\n9. Implement proper error handling for export failures\n10. Create preview option for exports",
+        "testStrategy": "1. Test JSON export format and content\n2. Verify Markdown export formatting\n3. Test download functionality\n4. Verify filename generation\n5. Test with various data volumes\n6. Verify all required data is included in exports\n7. Test error handling for export failures\n8. Verify loading indicators during export\n9. Test preview functionality",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement dark mode and responsive design",
+        "description": "Create a fully responsive design with dark mode support across all components.",
+        "details": "1. Implement FR-12 requirements for dark mode\n2. Create toggle button in header (🌙 Dark / ☀️ Light)\n3. Implement localStorage persistence for preference\n4. Apply dark mode to all views:\n   - Event list\n   - Event detail\n   - Modals\n   - Forms\n   - Tables\n5. Implement color scheme as specified in DR-1:\n   - Dark backgrounds (#1f2937, #111827)\n   - Light text (#e5e7eb)\n   - Subtle borders\n6. Ensure WCAG AA contrast compliance\n7. Make status badges colorful and readable in both modes\n8. Implement smooth transitions between modes\n9. Prevent flash of unstyled content\n10. Ensure all interactive elements are visible in both modes\n11. Implement responsive design for all screen sizes following DR-3 breakpoints:\n    - Mobile: < 640px\n    - Tablet: 640px - 1024px\n    - Desktop: > 1024px",
+        "testStrategy": "1. Test dark mode toggle functionality\n2. Verify preference persistence\n3. Test appearance of all components in both modes\n4. Verify contrast compliance with WCAG AA standards\n5. Test transitions between modes\n6. Verify no flash of unstyled content\n7. Test visibility of all interactive elements\n8. Verify responsive behavior on different screen sizes\n9. Test with various browsers and devices\n10. Verify print-friendly styles work in both modes",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-09T19:50:58.478Z",
+      "updated": "2025-10-09T19:50:58.479Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
