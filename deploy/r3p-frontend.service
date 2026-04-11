@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=10
 ExecStart=/usr/bin/podman run --rm --name r3p-frontend \
-  -p 127.0.0.1:3000:80 \
+  -p 127.0.0.1:3001:80 \
   r3p-frontend:latest
 ExecStop=/usr/bin/podman stop -t 10 r3p-frontend
 
