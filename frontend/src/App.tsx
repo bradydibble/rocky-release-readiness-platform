@@ -7,11 +7,15 @@ import { useAppStore } from './lib/store'
 
 export default function App() {
   const setIsAdmin = useAppStore((s) => s.setIsAdmin)
+  const setUser = useAppStore((s) => s.setUser)
   const { data } = useQuery({ queryKey: ['me'], queryFn: getMe })
 
   useEffect(() => {
-    if (data) setIsAdmin(data.is_admin)
-  }, [data, setIsAdmin])
+    if (data) {
+      setIsAdmin(data.is_admin)
+      setUser(data.user ?? null)
+    }
+  }, [data, setIsAdmin, setUser])
 
   return (
     <div className="min-h-screen flex flex-col">

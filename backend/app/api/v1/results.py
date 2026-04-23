@@ -1,15 +1,19 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.db import get_db
+from app.core.security import get_current_user
+from app.models.milestone import Milestone
 from app.models.result import Result
 from app.models.section import Section
 from app.models.test_case import TestCase
+from app.models.user import User
 from app.schemas.result import ResultCreate, ResultResponse
 
 router = APIRouter(tags=["results"])
+
+QUICK_OUTCOME_MAP = {"works": "PASS", "issues": "PARTIAL", "broken": "FAIL"}
 
 
 @router.get("/milestones/{milestone_id}/results", response_model=list[ResultResponse])
@@ -45,22 +49,47 @@ async def submit_result(
     body: ResultCreate,
     db: AsyncSession = Depends(get_db),
     x_username: str | None = Header(default=None),
+    current_user: User | None = Depends(get_current_user),
 ):
     tc = await db.get(TestCase, test_case_id)
     if not tc:
         raise HTTPException(status_code=404, detail="Test case not found")
 
-    if body.outcome not in ("PASS", "FAIL", "PARTIAL", "SKIP"):
-        raise HTTPException(status_code=422, detail="outcome must be PASS, FAIL, PARTIAL, or SKIP")
+    # Enforce closed milestone
+    section = await db.get(Section, tc.section_id)
+    milestone = await db.get(Milestone, section.milestone_id)
+    if milestone and milestone.status == "closed":
+        raise HTTPException(status_code=409, detail="This milestone is closed and no longer accepting results")
+
+    # Resolve outcome for quick submissions
+    if body.submission_method == "quick":
+        if body.quick_outcome not in QUICK_OUTCOME_MAP:
+            raise HTTPException(status_code=422, detail="quick_outcome must be works, issues, or broken")
+        outcome = QUICK_OUTCOME_MAP[body.quick_outcome]
+    else:
+        if body.outcome not in ("PASS", "FAIL", "PARTIAL", "SKIP"):
+            raise HTTPException(status_code=422, detail="outcome must be PASS, FAIL, PARTIAL, or SKIP")
+        outcome = body.outcome
+
+    # Validate bug_url loosely
+    if body.bug_url and not body.bug_url.startswith("http"):
+        raise HTTPException(status_code=422, detail="bug_url must be a valid URL")
 
     submitter = body.submitter_name or x_username
+    if current_user and not submitter:
+        submitter = current_user.display_name
     r = Result(
         test_case_id=test_case_id,
-        outcome=body.outcome,
+        outcome=outcome,
         arch=body.arch,
         deploy_type=body.deploy_type,
         hardware_notes=body.hardware_notes,
+        comment=body.comment,
         submitter_name=submitter,
+        submission_method=body.submission_method,
+        quick_outcome=body.quick_outcome,
+        bug_url=body.bug_url,
+        user_id=current_user.id if current_user else None,
     )
     db.add(r)
     await db.commit()

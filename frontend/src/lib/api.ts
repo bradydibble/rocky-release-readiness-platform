@@ -22,7 +22,12 @@ export type MilestoneStub = {
   id: number
   name: string
   status: 'open' | 'closed'
+  start_date: string | null
+  end_date: string | null
+  download_url: string | null
   created_at: string
+  test_case_count: number
+  result_count: number
 }
 
 export type Release = {
@@ -68,10 +73,20 @@ export type MilestoneDetail = {
   release_id: number
   name: string
   status: 'open' | 'closed'
+  start_date: string | null
+  end_date: string | null
+  download_url: string | null
   created_at: string
   release_name: string
   release_version: string
   sections: Section[]
+}
+
+export type HardwareEntry = {
+  arch: string
+  deploy_type: string
+  hardware_notes: string
+  result_count: number
 }
 
 export type Result = {
@@ -85,6 +100,9 @@ export type Result = {
   submitter_name: string | null
   submit_time: string
   carried_from_milestone_id: number | null
+  submission_method: 'quick' | 'detailed'
+  quick_outcome: 'works' | 'issues' | 'broken' | null
+  bug_url: string | null
 }
 
 export type CoverageCell = {
@@ -101,6 +119,44 @@ export type CoverageGrid = {
   grid: Record<string, CoverageCell>
 }
 
+export type UrgentNeed = {
+  section_name: string
+  test_case_id: number
+  test_case_name: string
+  blocking: string
+}
+
+export type CategorySectionSummary = {
+  section_id: number
+  name: string
+  arch: string | null
+  total: number
+  covered: number
+}
+
+export type CategorySummary = {
+  category: string
+  label: string
+  total: number
+  covered: number
+  by_arch: Record<string, ArchSummary>
+  sections: CategorySectionSummary[]
+}
+
+export type ArchSummary = {
+  total: number
+  covered: number
+  confidence: 'none' | 'low' | 'medium' | 'high'
+}
+
+export type CoverageSummary = {
+  total_tests: number
+  total_with_results: number
+  categories: CategorySummary[]
+  by_arch: Record<string, ArchSummary>
+  hardware_configs: number
+}
+
 // ── releases ─────────────────────────────────────────────────────────────────
 
 export const getReleases = () => request<Release[]>('/releases')
@@ -115,18 +171,23 @@ export const deleteRelease = (id: number) =>
 // ── milestones ───────────────────────────────────────────────────────────────
 
 export const getMilestone = (id: number) => request<MilestoneDetail>(`/milestones/${id}`)
-export const createMilestone = (releaseId: number, body: { name: string; status?: string }) =>
+export const createMilestone = (releaseId: number, body: { name: string; status?: string; start_date?: string; end_date?: string; download_url?: string }) =>
   request<MilestoneStub>(`/milestones/releases/${releaseId}`, { method: 'POST', body: JSON.stringify(body) })
-export const updateMilestone = (id: number, body: Partial<{ name: string; status: string }>) =>
+export const updateMilestone = (id: number, body: Partial<{ name: string; status: string; start_date: string; end_date: string; download_url: string }>) =>
   request<MilestoneStub>(`/milestones/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
 export const deleteMilestone = (id: number) =>
   request<void>(`/milestones/${id}`, { method: 'DELETE' })
 export const getCoverage = (id: number) => request<CoverageGrid>(`/milestones/${id}/coverage`)
+export const getUrgentNeeds = (id: number) => request<UrgentNeed[]>(`/milestones/${id}/urgent-needs`)
+export const getHardwareCoverage = (id: number) => request<HardwareEntry[]>(`/milestones/${id}/hardware-coverage`)
+export const getCoverageSummary = (id: number) => request<CoverageSummary>(`/milestones/${id}/coverage-summary`)
 export const carryForward = (milestoneId: number, sourceMilestoneId: number) =>
   request<{ copied: number }>(`/milestones/${milestoneId}/carry-forward`, {
     method: 'POST',
     body: JSON.stringify({ source_milestone_id: sourceMilestoneId }),
   })
+export const resetMilestone = (milestoneId: number) =>
+  request<{ reset: number }>(`/milestones/${milestoneId}/reset`, { method: 'POST' })
 
 // ── sections ─────────────────────────────────────────────────────────────────
 
@@ -167,6 +228,9 @@ export const submitResult = (
     hardware_notes?: string
     comment?: string
     submitter_name?: string
+    submission_method?: string
+    quick_outcome?: string
+    bug_url?: string
   },
 ) =>
   request<Result>(`/test-cases/${testCaseId}/results`, {
@@ -176,9 +240,82 @@ export const submitResult = (
 export const deleteResult = (id: number) =>
   request<void>(`/results/${id}`, { method: 'DELETE' })
 
+// ── bulk import ──────────────────────────────────────────────────────────────
+
+export type BulkResultItem = {
+  section_name: string
+  test_case_name: string
+  outcome: string
+  comment?: string
+}
+
+export type BulkImportRequest = {
+  submitter_name?: string
+  arch: string
+  deploy_type: string
+  hardware_notes?: string
+  results: BulkResultItem[]
+}
+
+export type BulkImportResponse = {
+  imported: number
+  skipped: number
+  unmatched: string[]
+}
+
+export const bulkImport = (milestoneId: number, body: BulkImportRequest) =>
+  request<BulkImportResponse>(`/milestones/${milestoneId}/bulk-import`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+
+// ── export ───────────────────────────────────────────────────────────────────
+
+export const exportMilestoneJson = (milestoneId: number) =>
+  `${BASE}/milestones/${milestoneId}/export/json`
+export const exportMilestoneMarkdown = (milestoneId: number) =>
+  `${BASE}/milestones/${milestoneId}/export/markdown`
+
 // ── auth ─────────────────────────────────────────────────────────────────────
+
+export type UserProfile = {
+  id: number
+  username: string
+  display_name: string
+  role: 'tester' | 'admin'
+  is_test_team: boolean
+}
+
+export type MeResponse = {
+  is_admin: boolean
+  user: UserProfile | null
+}
 
 export const login = (token: string) =>
   request<{ ok: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ token }) })
+export const registerUser = (body: { username: string; display_name: string; password: string }) =>
+  request<{ ok: boolean; user: UserProfile }>('/auth/register', { method: 'POST', body: JSON.stringify(body) })
+export const loginUser = (body: { username: string; password: string }) =>
+  request<{ ok: boolean; user: UserProfile }>('/auth/login-user', { method: 'POST', body: JSON.stringify(body) })
 export const logout = () => request<{ ok: boolean }>('/auth/logout', { method: 'POST' })
-export const getMe = () => request<{ is_admin: boolean }>('/auth/me')
+export const getMe = () => request<MeResponse>('/auth/me')
+
+// ── admin user management ───────────────────────────────────────────────────
+
+export type AdminUserItem = {
+  id: number
+  username: string
+  display_name: string
+  role: string
+  is_test_team: boolean
+  disabled: boolean
+  created_at: string
+  last_login: string | null
+  result_count: number
+}
+
+export const getAdminUsers = () => request<AdminUserItem[]>('/admin/users')
+export const updateAdminUser = (
+  userId: number,
+  body: Partial<{ role: string; is_test_team: boolean; disabled: boolean }>,
+) => request<AdminUserItem>(`/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) })

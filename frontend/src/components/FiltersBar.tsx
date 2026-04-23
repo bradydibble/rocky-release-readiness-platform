@@ -1,9 +1,6 @@
-const ARCHES = ['x86_64', 'aarch64', 'ppc64le', 's390x']
-
 export interface Filters {
   untestedOnly: boolean
   blockersOnly: boolean
-  arch: string
 }
 
 interface Props {
@@ -35,20 +32,6 @@ export default function FiltersBar({ filters, onChange }: Props) {
         />
         <span className="text-slate-300">Blockers only</span>
       </label>
-
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs text-slate-500">Arch</span>
-        <select
-          className="input text-xs py-1"
-          value={filters.arch}
-          onChange={(e) => onChange({ ...filters, arch: e.target.value })}
-        >
-          <option value="">All</option>
-          {ARCHES.map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
-      </div>
     </div>
   )
 }

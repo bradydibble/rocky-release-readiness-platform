@@ -19,11 +19,17 @@ class Result(Base):
     hardware_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     submitter_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    submission_method: Mapped[str] = mapped_column(String(20), default="detailed")  # quick | detailed
+    quick_outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)  # works | issues | broken
+    bug_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     submit_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     carried_from_milestone_id: Mapped[int | None] = mapped_column(
         ForeignKey("milestones.id", ondelete="SET NULL"), nullable=True
+    )
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     test_case: Mapped["TestCase"] = relationship(  # noqa: F821
@@ -31,4 +37,7 @@ class Result(Base):
     )
     carried_from_milestone: Mapped["Milestone | None"] = relationship(  # noqa: F821
         "Milestone", foreign_keys=[carried_from_milestone_id]
+    )
+    user: Mapped["User | None"] = relationship(  # noqa: F821
+        "User", foreign_keys=[user_id]
     )

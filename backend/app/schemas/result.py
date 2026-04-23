@@ -10,6 +10,9 @@ class ResultCreate(BaseModel):
     hardware_notes: str | None = None
     comment: str | None = None
     submitter_name: str | None = None
+    submission_method: str = "detailed"  # quick | detailed
+    quick_outcome: str | None = None  # works | issues | broken
+    bug_url: str | None = None
 
 
 class ResultResponse(BaseModel):
@@ -25,6 +28,10 @@ class ResultResponse(BaseModel):
     submitter_name: str | None
     submit_time: datetime
     carried_from_milestone_id: int | None
+    submission_method: str
+    quick_outcome: str | None
+    bug_url: str | None
+    user_id: int | None = None
 
 
 class CarryForwardRequest(BaseModel):

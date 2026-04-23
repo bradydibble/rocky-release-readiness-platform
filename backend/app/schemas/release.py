@@ -31,7 +31,11 @@ class MilestoneStub(BaseModel):
     id: int
     name: str
     status: str
+    start_date: datetime | None
+    end_date: datetime | None
     created_at: datetime
+    test_case_count: int = 0
+    result_count: int = 0
 
 
 class ReleaseDetail(ReleaseResponse):

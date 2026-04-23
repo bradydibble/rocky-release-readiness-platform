@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { deleteResult, getResults, removeSignoff, signoffTestCase } from '../lib/api'
 import type { TestCase } from '../lib/api'
+import { getGuidance } from '../lib/testGuidance'
 import { useAppStore } from '../lib/store'
 import ResultForm from './ResultForm'
 
@@ -16,11 +17,13 @@ interface Props {
   tc: TestCase
   milestoneId: number
   archFilter: string
+  sectionName?: string
 }
 
-export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
+export default function TestCaseRow({ tc, milestoneId, archFilter, sectionName }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showHowTo, setShowHowTo] = useState(false)
   const isAdmin = useAppStore((s) => s.isAdmin)
   const queryClient = useQueryClient()
 
@@ -63,6 +66,9 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
     { pass: 0, fail: 0, partial: 0, skip: 0 },
   )
   const hasResults = totals.pass + totals.fail + totals.partial + totals.skip > 0
+  const totalResultCount = totals.pass + totals.fail + totals.partial + totals.skip
+
+  const guidance = getGuidance(tc.name, sectionName)
 
   return (
     <div className="border-b border-slate-800 last:border-0">
@@ -79,10 +85,10 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             {tc.blocking === 'blocker' && (
-              <span className="badge-blocker">BLOCKER</span>
+              <span className="badge-blocker">critical</span>
             )}
             {tc.admin_signoff && (
-              <span className="badge-signoff">✓ SIGNED OFF</span>
+              <span className="badge-signoff">✓ APPROVED</span>
             )}
             <span className="text-sm text-slate-200">{tc.name}</span>
             {tc.procedure_url && (
@@ -99,7 +105,7 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
           </div>
         </div>
 
-        {/* Result counts */}
+        {/* Result counts / context chip */}
         <div className="flex items-center gap-2 text-xs shrink-0">
           {hasResults ? (
             <>
@@ -108,6 +114,8 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
               {totals.partial > 0 && <span className="text-yellow-400">{totals.partial}~</span>}
               {totals.skip > 0 && <span className="text-slate-500">{totals.skip}S</span>}
             </>
+          ) : archFilter ? (
+            <span className="text-blue-500/80">first on {archFilter}!</span>
           ) : (
             <span className="text-slate-600">untested</span>
           )}
@@ -116,6 +124,56 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
 
       {expanded && (
         <div className="pl-6 pb-3 space-y-2">
+          {/* How to test — collapsible inline guidance */}
+          {guidance && (
+            <div>
+              <button
+                type="button"
+                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 mb-1"
+                onClick={() => setShowHowTo(!showHowTo)}
+              >
+                <span>{showHowTo ? '▼' : '▶'}</span>
+                How to test this
+                {guidance.timeEstimate && (
+                  <span className="text-slate-600 ml-1">~{guidance.timeEstimate}</span>
+                )}
+              </button>
+              {showHowTo && (
+                <div className="rounded bg-slate-800/60 border border-slate-700 px-3 py-2.5 space-y-2 text-xs mb-2">
+                  <ol className="space-y-1">
+                    {guidance.steps.map((step, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-slate-600 shrink-0 font-mono">{i + 1}.</span>
+                        <code className="text-emerald-300 font-mono">{step}</code>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="text-slate-400">
+                    <span className="text-slate-500">Expected: </span>{guidance.expect}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Context line */}
+          {!guidance && !hasResults && (
+            <p className="text-xs text-slate-600 italic">
+              Boot a fresh Rocky Linux install and verify this behavior works as expected.
+            </p>
+          )}
+
+          {/* Result count context */}
+          {hasResults && (
+            <p className="text-xs text-slate-600">
+              {totalResultCount} result{totalResultCount !== 1 ? 's' : ''} submitted
+              {archFilter ? ` on ${archFilter}` : ''}
+              {tc.admin_signoff && (
+                <span className="ml-2 text-emerald-700">· Approved by {tc.signoff_by}</span>
+              )}
+            </p>
+          )}
+
           {/* Admin actions */}
           {isAdmin && (
             <div className="flex gap-2">
@@ -124,7 +182,7 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
                 onClick={() => signoffMutation.mutate()}
                 disabled={signoffMutation.isPending}
               >
-                {tc.admin_signoff ? 'Remove sign-off' : 'Sign off'}
+                {tc.admin_signoff ? 'Remove approval' : 'Approve'}
               </button>
             </div>
           )}
@@ -152,6 +210,18 @@ export default function TestCaseRow({ tc, milestoneId, archFilter }: Props) {
                     <span className="text-slate-600 ml-auto">
                       {r.submitter_name || 'anonymous'}
                     </span>
+                    {r.bug_url && (
+                      <a
+                        href={r.bug_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-orange-500 hover:text-orange-400"
+                        title={r.bug_url}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        🐛
+                      </a>
+                    )}
                     {r.carried_from_milestone_id && (
                       <span className="text-blue-600 text-xs" title="Carried forward">↩</span>
                     )}

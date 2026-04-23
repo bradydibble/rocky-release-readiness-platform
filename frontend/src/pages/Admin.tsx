@@ -11,12 +11,16 @@ import {
   deleteMilestone,
   deleteSection,
   deleteTestCase,
+  getAdminUsers,
   getMilestone,
   getReleases,
   login,
   logout,
+  resetMilestone,
+  updateAdminUser,
   updateMilestone,
 } from '../lib/api'
+import type { AdminUserItem } from '../lib/api'
 import { useAppStore } from '../lib/store'
 
 // ── Login Panel ───────────────────────────────────────────────────────────────
@@ -93,19 +97,81 @@ function AddReleaseForm({ onAdded }: { onAdded: () => void }) {
 
 function AddMilestoneForm({ releaseId, onAdded }: { releaseId: number; onAdded: () => void }) {
   const [name, setName] = useState('rc1')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [downloadUrl, setDownloadUrl] = useState('')
   const mutation = useMutation({
-    mutationFn: () => createMilestone(releaseId, { name }),
-    onSuccess: () => { onAdded(); setName('rc1') },
+    mutationFn: () => createMilestone(releaseId, {
+      name,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      download_url: downloadUrl || undefined,
+    }),
+    onSuccess: () => { onAdded(); setName('rc1'); setStartDate(''); setEndDate(''); setDownloadUrl('') },
   })
   return (
     <form
-      className="flex gap-2 items-center"
+      className="flex flex-wrap gap-2 items-center"
       onSubmit={(e) => { e.preventDefault(); mutation.mutate() }}
     >
       <select className="input text-xs" value={name} onChange={(e) => setName(e.target.value)}>
         {['lookahead', 'beta', 'rc1', 'rc2'].map((n) => <option key={n}>{n}</option>)}
       </select>
-      <button type="submit" className="btn-outline text-xs" disabled={mutation.isPending}>+ Milestone</button>
+      <div>
+        <label className="block text-xs text-slate-500 mb-0.5">Start date</label>
+        <input type="date" className="input text-xs" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+      </div>
+      <div>
+        <label className="block text-xs text-slate-500 mb-0.5">End date</label>
+        <input type="date" className="input text-xs" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+      </div>
+      <div>
+        <label className="block text-xs text-slate-500 mb-0.5">ISO download URL</label>
+        <input
+          className="input text-xs w-64"
+          placeholder="https://dl.rockylinux.org/…"
+          value={downloadUrl}
+          onChange={(e) => setDownloadUrl(e.target.value)}
+        />
+      </div>
+      <button type="submit" className="btn-outline text-xs self-end" disabled={mutation.isPending}>+ Milestone</button>
+    </form>
+  )
+}
+
+function EditDownloadUrl({ milestoneId, current, onSaved }: {
+  milestoneId: number
+  current: string | null
+  onSaved: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [url, setUrl] = useState(current ?? '')
+  const mutation = useMutation({
+    mutationFn: () => updateMilestone(milestoneId, { download_url: url || undefined }),
+    onSuccess: () => { onSaved(); setEditing(false) },
+  })
+  if (!editing) {
+    return (
+      <span className="flex items-center gap-1 text-xs">
+        {current
+          ? <a href={current} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline truncate max-w-[200px]">{current}</a>
+          : <span className="text-slate-600 italic">no ISO URL</span>
+        }
+        <button type="button" className="text-slate-600 hover:text-slate-300 ml-1" onClick={() => setEditing(true)}>✏️</button>
+      </span>
+    )
+  }
+  return (
+    <form className="flex items-center gap-1" onSubmit={(e) => { e.preventDefault(); mutation.mutate() }}>
+      <input
+        className="input text-xs w-52"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://…"
+        autoFocus
+      />
+      <button type="submit" className="btn-primary text-xs px-2 py-1" disabled={mutation.isPending}>Save</button>
+      <button type="button" className="btn-ghost text-xs px-2 py-1" onClick={() => setEditing(false)}>✕</button>
     </form>
   )
 }
@@ -191,6 +257,118 @@ function CarryForwardPanel({ milestoneId, allMilestones }: {
   )
 }
 
+// ── Reset milestone ──────────────────────────────────────────────────────────
+
+function ResetMilestoneButton({ milestoneId }: { milestoneId: number }) {
+  const queryClient = useQueryClient()
+  const [result, setResult] = useState<string | null>(null)
+  const mutation = useMutation({
+    mutationFn: () => resetMilestone(milestoneId),
+    onSuccess: (data) => {
+      setResult(`Reset ${data.reset} approvals.`)
+      queryClient.invalidateQueries({ queryKey: ['milestone', milestoneId] })
+    },
+    onError: (e) => setResult(`Error: ${e}`),
+  })
+
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <button
+        className="btn-outline text-xs text-amber-500 border-amber-700 hover:bg-amber-900/30"
+        disabled={mutation.isPending}
+        onClick={() => {
+          if (confirm('Reset all approvals for this milestone? Results will be preserved.'))
+            mutation.mutate()
+        }}
+      >
+        Reset approvals for new RC
+      </button>
+      {result && <span className="text-xs text-slate-400">{result}</span>}
+    </div>
+  )
+}
+
+// ── User management ─────────────────────────────────────────────────────────
+
+function UserManagement() {
+  const queryClient = useQueryClient()
+  const { data: users, isLoading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: getAdminUsers,
+  })
+
+  const updateMut = useMutation({
+    mutationFn: ({ userId, body }: { userId: number; body: Partial<AdminUserItem> }) =>
+      updateAdminUser(userId, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+
+  if (isLoading) return <p className="text-sm text-slate-500">Loading users...</p>
+  if (!users || users.length === 0) return <p className="text-sm text-slate-600">No registered users yet.</p>
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-[1fr_1fr_auto_auto_auto_auto] gap-2 text-xs text-slate-500 font-semibold uppercase tracking-wide px-2 pb-1 border-b border-slate-700">
+        <span>Username</span>
+        <span>Display Name</span>
+        <span className="text-center">Results</span>
+        <span className="text-center">Test Team</span>
+        <span className="text-center">Role</span>
+        <span className="text-center">Status</span>
+      </div>
+      {users.map((u) => (
+        <div
+          key={u.id}
+          className={`grid grid-cols-[1fr_1fr_auto_auto_auto_auto] gap-2 items-center px-2 py-1.5 rounded text-sm ${
+            u.disabled ? 'opacity-50' : ''
+          }`}
+        >
+          <span className="text-slate-200 font-medium truncate">@{u.username}</span>
+          <span className="text-slate-400 truncate">{u.display_name}</span>
+          <span className="text-center text-xs text-slate-500 w-16">{u.result_count}</span>
+          <button
+            className={`w-20 text-center text-xs rounded px-2 py-1 transition-colors ${
+              u.is_test_team
+                ? 'bg-blue-900/40 text-blue-300 border border-blue-700'
+                : 'bg-slate-800 text-slate-600 border border-slate-700 hover:border-slate-500'
+            }`}
+            onClick={() => updateMut.mutate({ userId: u.id, body: { is_test_team: !u.is_test_team } })}
+            disabled={updateMut.isPending}
+          >
+            {u.is_test_team ? 'Team' : 'Regular'}
+          </button>
+          <button
+            className={`w-16 text-center text-xs rounded px-2 py-1 transition-colors ${
+              u.role === 'admin'
+                ? 'bg-purple-900/40 text-purple-300 border border-purple-700'
+                : 'bg-slate-800 text-slate-500 border border-slate-700 hover:border-slate-500'
+            }`}
+            onClick={() => {
+              const newRole = u.role === 'admin' ? 'tester' : 'admin'
+              if (newRole === 'admin' && !confirm(`Promote @${u.username} to admin?`)) return
+              updateMut.mutate({ userId: u.id, body: { role: newRole } })
+            }}
+            disabled={updateMut.isPending}
+          >
+            {u.role}
+          </button>
+          <button
+            className={`w-20 text-center text-xs rounded px-2 py-1 transition-colors ${
+              u.disabled
+                ? 'bg-red-900/30 text-red-400 border border-red-800'
+                : 'bg-slate-800 text-slate-500 border border-slate-700 hover:border-slate-500'
+            }`}
+            onClick={() => updateMut.mutate({ userId: u.id, body: { disabled: !u.disabled } })}
+            disabled={updateMut.isPending}
+          >
+            {u.disabled ? 'Disabled' : 'Active'}
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Section manager ───────────────────────────────────────────────────────────
 
 function SectionManager({ milestoneId }: { milestoneId: number }) {
@@ -236,7 +414,7 @@ function SectionManager({ milestoneId }: { milestoneId: number }) {
           {sec.test_cases.map((tc) => (
             <div key={tc.id} className="flex items-center gap-2 text-xs text-slate-500 pl-2">
               <span className="flex-1 truncate">{tc.name}</span>
-              {tc.blocking === 'blocker' && <span className="badge-blocker">BLOCKER</span>}
+              {tc.blocking === 'blocker' && <span className="badge-blocker">release-blocking</span>}
               <button
                 className="text-red-700 hover:text-red-500"
                 onClick={() => {
@@ -259,10 +437,13 @@ function SectionManager({ milestoneId }: { milestoneId: number }) {
 
 // ── Main Admin panel ──────────────────────────────────────────────────────────
 
+type AdminTab = 'releases' | 'users'
+
 export function Component() {
   const isAdmin = useAppStore((s) => s.isAdmin)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [tab, setTab] = useState<AdminTab>('releases')
   const [expandedRelease, setExpandedRelease] = useState<number | null>(null)
   const [expandedMilestone, setExpandedMilestone] = useState<number | null>(null)
 
@@ -301,6 +482,29 @@ export function Component() {
         <button onClick={handleLogout} className="btn-ghost text-xs">Sign out</button>
       </div>
 
+      {/* Tab bar */}
+      <div className="flex rounded-lg bg-slate-800 p-0.5 w-fit">
+        {([['releases', 'Releases'], ['users', 'Users']] as [AdminTab, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`rounded-md px-4 py-1.5 text-xs font-semibold transition-colors ${
+              tab === key ? 'bg-slate-600 text-slate-100' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'users' ? (
+        <div className="card space-y-3">
+          <h2 className="font-semibold text-slate-200 text-sm">Registered Users</h2>
+          <UserManagement />
+        </div>
+      ) : (
+      <>
       <div className="card space-y-3">
         <h2 className="font-semibold text-slate-200 text-sm">Releases</h2>
         <AddReleaseForm onAdded={() => queryClient.invalidateQueries({ queryKey: ['releases'] })} />
@@ -371,7 +575,16 @@ export function Component() {
 
                         {expandedMilestone === m.id && (
                           <div className="pl-4 border-l border-slate-700 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500">ISO URL:</span>
+                              <EditDownloadUrl
+                                milestoneId={m.id}
+                                current={m.download_url ?? null}
+                                onSaved={() => queryClient.invalidateQueries({ queryKey: ['releases'] })}
+                              />
+                            </div>
                             <CarryForwardPanel milestoneId={m.id} allMilestones={allMs} />
+                            <ResetMilestoneButton milestoneId={m.id} />
                             <SectionManager milestoneId={m.id} />
                           </div>
                         )}
@@ -383,6 +596,8 @@ export function Component() {
             )
           })}
         </div>
+      )}
+      </>
       )}
     </div>
   )
