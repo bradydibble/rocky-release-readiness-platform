@@ -14,12 +14,16 @@ set -euo pipefail
 MILESTONE_ID=""
 API_URL=""
 SUBMITTER_NAME=""
+WITH_C3=false
+C3_TOKEN=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --milestone-id) MILESTONE_ID="$2"; shift 2 ;;
     --api-url)      API_URL="$2";      shift 2 ;;
     --name)         SUBMITTER_NAME="$2"; shift 2 ;;
+    --with-c3)      WITH_C3=true;      shift ;;
+    --c3-token)     C3_TOKEN="$2"; WITH_C3=true; shift 2 ;;
     *) shift ;;
   esac
 done
@@ -110,9 +114,50 @@ if command -v systemctl &>/dev/null; then
   [[ "$target" == "multi-user.target" || "$target" == "graphical.target" ]] && boot_target_ok=true
 fi
 
+# ── C3 hardware compatibility (opt-in) ────────────────────────────────────────
+
+c3_hw_compat=false
+c3_details=""
+
+if [[ "$WITH_C3" == "true" ]]; then
+  if ! command -v c3 &>/dev/null; then
+    echo "Installing C3 hardware compatibility tool..." >&2
+    if sudo dnf install -y https://c3.ciq.com/downloads/c3-0.1-14.el9.x86_64.rpm >&2 2>&1; then
+      echo "C3 installed." >&2
+    else
+      echo "Warning: C3 installation failed. Skipping hardware tests." >&2
+    fi
+  fi
+
+  if command -v c3 &>/dev/null; then
+    echo "Running C3 hardware compatibility tests (this may take a few minutes)..." >&2
+    c3_output=$(sudo c3 test 2>&1) || true
+    if echo "$c3_output" | grep -qi "pass"; then
+      c3_hw_compat=true
+    fi
+    # Capture a one-line summary
+    c3_details=$(echo "$c3_output" | tail -5 | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-200)
+
+    # Optionally submit to c3.ciq.com
+    if [[ -n "$C3_TOKEN" ]]; then
+      echo "Submitting to C3 hardware database..." >&2
+      sudo c3 submit "$C3_TOKEN" >&2 2>&1 || echo "Warning: C3 submission failed." >&2
+    fi
+  fi
+fi
+
 # ── Build JSON output ─────────────────────────────────────────────────────────
 
 json_bool() { [[ "$1" == "true" ]] && echo "true" || echo "false"; }
+
+C3_JSON=""
+if [[ "$WITH_C3" == "true" ]]; then
+  C3_JSON=$(cat <<EOFC3
+,
+    "c3_hw_compat": $(json_bool $c3_hw_compat)
+EOFC3
+)
+fi
 
 OUTPUT=$(cat <<EOF
 {
@@ -129,7 +174,7 @@ OUTPUT=$(cat <<EOF
     "boot_errors": ${boot_errors},
     "ntp_synced": $(json_bool $ntp_synced),
     "ssh_active": $(json_bool $ssh_active),
-    "boot_target_ok": $(json_bool $boot_target_ok)
+    "boot_target_ok": $(json_bool $boot_target_ok)${C3_JSON}
   }
 }
 EOF
@@ -188,6 +233,11 @@ if [[ -n "$MILESTONE_ID" && -n "$API_URL" ]]; then
 
   [[ "$boot_target_ok" == "true" ]] && TGT_OUT="PASS" || TGT_OUT="FAIL"
   add_result "Community Testable Items" "default boot target is graphical or multi-user" "$TGT_OUT"
+
+  if [[ "$WITH_C3" == "true" ]] && command -v c3 &>/dev/null; then
+    [[ "$c3_hw_compat" == "true" ]] && C3_OUT="PASS" || C3_OUT="FAIL"
+    add_result "Community Testable Items" "c3 hardware compatibility test" "$C3_OUT"
+  fi
 
   SUBMIT_PAYLOAD="{\"arch\":\"${ARCH}\",\"deploy_type\":\"${DEPLOY_TYPE}\",\"hardware_notes\":\"${HARDWARE_NOTES}\"${NAME_FIELD},\"results\":[${RESULTS_JSON}]}"
 

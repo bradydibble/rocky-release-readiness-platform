@@ -184,6 +184,36 @@ export default function CoverageDashboard({
           <CategoryRow key={cat.category} category={cat} />
         ))}
       </div>
+
+      {/* C3 Hardware Compatibility */}
+      <div className="border-t border-slate-800 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-950/40 border border-blue-800/50 flex items-center justify-center">
+              <span className="text-xs font-bold text-blue-400">C3</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-200">Hardware Compatibility</p>
+              <p className="text-xs text-slate-500">
+                CIQ Compatibility Catalog — CPU, memory, PCI, USB, sensors, storage, network
+              </p>
+            </div>
+          </div>
+          <a
+            href="https://c3.ciq.com/catalog"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-blue-500 hover:text-blue-400 shrink-0"
+          >
+            Browse hardware database ↗
+          </a>
+        </div>
+        <p className="text-xs text-slate-600 mt-2">
+          Run <code className="text-blue-400">sudo c3 test</code> on your Rocky system to verify
+          hardware compatibility. Install:{' '}
+          <code className="text-slate-400">sudo dnf install https://c3.ciq.com/downloads/c3-0.1-14.el9.x86_64.rpm</code>
+        </p>
+      </div>
     </div>
   )
 }

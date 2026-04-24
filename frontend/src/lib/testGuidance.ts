@@ -427,6 +427,22 @@ const GUIDANCE_MAP: Record<string, Guidance> = {
     expect: 'Vagrant box boots, SSH access works, Rocky version correct',
     timeEstimate: '10 min',
   },
+  'c3 hardware': {
+    steps: [
+      'sudo dnf install https://c3.ciq.com/downloads/c3-0.1-14.el9.x86_64.rpm',
+      'sudo c3 test',
+    ],
+    expect: 'All hardware compatibility tests pass (CPU, memory, PCI, USB, sensors, storage, network)',
+    timeEstimate: '5–10 min',
+  },
+  'hardware compat': {
+    steps: [
+      'sudo dnf install https://c3.ciq.com/downloads/c3-0.1-14.el9.x86_64.rpm',
+      'sudo c3 test',
+    ],
+    expect: 'All hardware compatibility tests pass (CPU, memory, PCI, USB, sensors, storage, network)',
+    timeEstimate: '5–10 min',
+  },
 }
 
 /**
@@ -598,6 +614,12 @@ export const HELPER_CHECK_MAP: Record<string, CheckMapping> = {
   boot_errors: {
     sectionName: 'Post-Installation Requirements',
     testCasePattern: 'system journal: no critical',
+    outcomeIfTrue: 'PASS',
+    outcomeIfFalse: 'FAIL',
+  },
+  c3_hw_compat: {
+    sectionName: 'Community Testable Items',
+    testCasePattern: 'c3 hardware compatibility test',
     outcomeIfTrue: 'PASS',
     outcomeIfFalse: 'FAIL',
   },

@@ -7,7 +7,7 @@ import { getGuidance, HELPER_CHECK_MAP, journeyOrder } from '../lib/testGuidance
 
 const ARCHES = ['x86_64', 'aarch64', 'ppc64le', 's390x']
 
-type Stage = 'orientation' | 'install' | 'test-path' | 'automated' | 'testing' | 'done'
+type Stage = 'orientation' | 'install' | 'test-path' | 'automated' | 'c3-test' | 'testing' | 'done'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -674,11 +674,13 @@ function InstallStage({
 function TestPathStage({
   hasManualTests,
   onAutomated,
+  onC3Test,
   onManual,
   onStandard,
 }: {
   hasManualTests: boolean
   onAutomated: () => void
+  onC3Test: () => void
   onManual: () => void
   onStandard: () => void
 }) {
@@ -703,6 +705,24 @@ function TestPathStage({
           <p className="text-xs text-slate-400">
             One command checks 8 things automatically. Copy the command, paste it into your terminal,
             paste the results back here. About 2 minutes.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          className="w-full rounded-lg border border-blue-800 bg-blue-950/20 hover:bg-blue-950/40 transition-colors p-4 text-left space-y-1"
+          onClick={onC3Test}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-blue-300">Run C3 hardware compatibility test</p>
+            <span className="text-xs bg-blue-900/60 text-blue-400 px-2 py-0.5 rounded font-medium">
+              hardware
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">
+            Install the C3 tool from CIQ and run a full hardware compatibility suite — CPU, memory,
+            PCI, USB, sensors, storage, and network. Results go to both R3P and the{' '}
+            <span className="text-blue-400">C3 hardware database</span>. About 5–10 minutes.
           </p>
         </button>
 
@@ -964,6 +984,195 @@ function AutomatedTestStage({
         disabled={!rawText.trim()}
       >
         Preview results →
+      </button>
+    </StageCard>
+  )
+}
+
+// ── C3 hardware compatibility test stage ─────────────────────────────────────
+
+function C3TestStage({
+  milestoneId,
+  username,
+  arch,
+  onDone,
+  onBack,
+}: {
+  milestoneId: number
+  username: string
+  arch: string
+  onDone: (count: number) => void
+  onBack: () => void
+}) {
+  const queryClient = useQueryClient()
+  const [step, setStep] = useState(0)
+  const [c3Outcome, setC3Outcome] = useState<'pass' | 'partial' | 'fail' | null>(null)
+  const [notes, setNotes] = useState('')
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      const outcomeMap = { pass: 'PASS', partial: 'PARTIAL', fail: 'FAIL' } as const
+      return bulkImport(milestoneId, {
+        submitter_name: username || undefined,
+        arch,
+        deploy_type: 'bare-metal',
+        results: [{
+          section_name: 'Community Testable Items',
+          test_case_name: 'c3 hardware compatibility test',
+          outcome: outcomeMap[c3Outcome!],
+          ...(notes.trim() ? { comment: notes.trim() } : {}),
+        }],
+      })
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['milestone', milestoneId] })
+      queryClient.invalidateQueries({ queryKey: ['coverage', milestoneId] })
+      queryClient.invalidateQueries({ queryKey: ['urgent-needs', milestoneId] })
+      queryClient.invalidateQueries({ queryKey: ['releases'] })
+      onDone(data.imported)
+    },
+  })
+
+  if (step === 0) {
+    return (
+      <StageCard stepLabel="Hardware test — step 1 of 3" title="Install the C3 tool" onBack={onBack}>
+        <p className="text-sm text-slate-400">
+          <strong className="text-slate-300">C3</strong> (CIQ Compatibility Catalog) tests your hardware
+          against Rocky Linux — CPU, memory, PCI bus, USB, sensors, storage, and network adapters.
+          It's a single RPM that takes a few seconds to install.
+        </p>
+
+        <div className="space-y-2">
+          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">
+            Run this on your Rocky Linux system
+          </p>
+          <CodeBlock>sudo dnf install https://c3.ciq.com/downloads/c3-0.1-14.el9.x86_64.rpm</CodeBlock>
+          <p className="text-xs text-slate-600">
+            This installs the <code className="text-slate-400">c3</code> command-line tool. It only reads
+            hardware information — it doesn't change your system.
+          </p>
+        </div>
+
+        <div className="rounded border border-slate-800 bg-slate-900/40 px-4 py-3 space-y-1.5">
+          <p className="text-xs font-medium text-slate-400">What C3 checks:</p>
+          <ul className="text-xs text-slate-500 space-y-0.5">
+            <li>CPU — functional, frequency, cache, power states</li>
+            <li>Memory — allocation and read/write verification</li>
+            <li>PCI bus — device enumeration and bridges</li>
+            <li>USB bus — controller and device enumeration</li>
+            <li>Sensors — detection, temperature, fan speed</li>
+            <li>Storage — disk detection and I/O</li>
+            <li>Network — interface enumeration and link status</li>
+          </ul>
+        </div>
+
+        <button type="button" className="btn-primary w-full" onClick={() => setStep(1)}>
+          C3 is installed →
+        </button>
+      </StageCard>
+    )
+  }
+
+  if (step === 1) {
+    return (
+      <StageCard stepLabel="Hardware test — step 2 of 3" title="Run the hardware tests" onBack={() => setStep(0)}>
+        <p className="text-sm text-slate-400">
+          Run the test suite. This probes your hardware components and takes a few minutes
+          depending on your system.
+        </p>
+
+        <CodeBlock>sudo c3 test</CodeBlock>
+
+        <p className="text-xs text-slate-500">
+          When it finishes, you'll see a summary showing which components passed or failed.
+          Note the overall result (all passed, some failed, etc.).
+        </p>
+
+        <div className="rounded border border-blue-900/50 bg-blue-950/20 px-4 py-3 space-y-2">
+          <p className="text-xs font-medium text-blue-400">
+            Optional: submit to the C3 hardware database
+          </p>
+          <p className="text-xs text-slate-400">
+            If you have a C3 account, you can also submit your results to the public hardware database.
+            Log in at{' '}
+            <a href="https://c3.ciq.com/login" target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-400">
+              c3.ciq.com ↗
+            </a>
+            {' '}to get your submission token, then run:
+          </p>
+          <CodeBlock>sudo c3 submit YOUR_TOKEN</CodeBlock>
+          <p className="text-xs text-slate-600">
+            This is optional — your R3P result will be recorded either way.
+          </p>
+        </div>
+
+        <button type="button" className="btn-primary w-full" onClick={() => setStep(2)}>
+          Tests finished →
+        </button>
+      </StageCard>
+    )
+  }
+
+  return (
+    <StageCard stepLabel="Hardware test — step 3 of 3" title="Report your C3 results" onBack={() => setStep(1)}>
+      <p className="text-sm text-slate-400">
+        What was the overall result of the C3 hardware compatibility test?
+      </p>
+
+      <div className="grid grid-cols-3 gap-2">
+        {([
+          { key: 'pass' as const, icon: '✓', label: 'All passed', active: 'border-emerald-500 bg-emerald-900/40 text-emerald-300' },
+          { key: 'partial' as const, icon: '~', label: 'Some failed', active: 'border-yellow-500 bg-yellow-900/40 text-yellow-300' },
+          { key: 'fail' as const, icon: '✕', label: 'Major failures', active: 'border-red-500 bg-red-900/40 text-red-300' },
+        ]).map(({ key, icon, label, active }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setC3Outcome(key)}
+            className={`rounded-lg border-2 py-3 text-center cursor-pointer transition-all ${
+              c3Outcome === key ? active : 'border-slate-700 text-slate-500 hover:border-slate-500'
+            }`}
+          >
+            <div className="text-lg font-bold">{icon}</div>
+            <div className="text-xs font-medium mt-0.5">{label}</div>
+          </button>
+        ))}
+      </div>
+
+      {(c3Outcome === 'partial' || c3Outcome === 'fail') && (
+        <div className="space-y-1">
+          <label className="text-xs text-slate-400 font-medium">
+            Which components failed? <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            className="w-full h-20 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-sm text-slate-300 placeholder-slate-600 resize-none focus:outline-none focus:border-emerald-700"
+            placeholder="e.g. USB bus test failed — device enumeration returned 0 devices"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
+      )}
+
+      {mutation.isError && (
+        <p className="text-xs text-red-400">{String(mutation.error)}</p>
+      )}
+
+      <button
+        type="button"
+        className="btn-primary w-full"
+        onClick={() => mutation.mutate()}
+        disabled={
+          !c3Outcome ||
+          ((c3Outcome === 'partial' || c3Outcome === 'fail') && !notes.trim()) ||
+          mutation.isPending ||
+          mutation.isSuccess
+        }
+      >
+        {mutation.isPending
+          ? 'Submitting…'
+          : mutation.isSuccess
+          ? 'Submitted ✓'
+          : 'Submit hardware result'}
       </button>
     </StageCard>
   )
@@ -1265,6 +1474,7 @@ export default function GuidedJourney({ milestone, needs }: Props) {
       <TestPathStage
         hasManualTests={totalSteps > 0}
         onAutomated={() => setStage('automated')}
+        onC3Test={() => setStage('c3-test')}
         onManual={() => {
           if (totalSteps === 0) {
             setStage('done')
@@ -1282,6 +1492,21 @@ export default function GuidedJourney({ milestone, needs }: Props) {
       <AutomatedTestStage
         milestoneId={milestone.id}
         username={localName}
+        onDone={(count) => {
+          setSubmittedCount(count)
+          setStage('done')
+        }}
+        onBack={() => setStage('test-path')}
+      />
+    )
+  }
+
+  if (stage === 'c3-test') {
+    return (
+      <C3TestStage
+        milestoneId={milestone.id}
+        username={localName}
+        arch={arch}
         onDone={(count) => {
           setSubmittedCount(count)
           setStage('done')
